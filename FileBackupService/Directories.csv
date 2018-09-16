@@ -1,0 +1,14 @@
+﻿// Enter the directories to be backed up, their destination directories
+// and a 1 (active) or a 0 (inactive). 
+// Include file patterns - *.* is the default.
+// Begin the line with a # and separate the values with a comma.
+// Enter one source / destination pair per line. 
+// Lines with the wrong format or invalid paths will be disregarded.
+// Changes will not take effect until the system or the service is restarted.
+//
+// Examples:
+// #"C:\Data\*.*", "Z:\Data\", 1
+// #"C:\Users\Tom\Documents\*.docx", "Z:\Data\Documents\", 1
+
+#"C:\Data\NewDocuments\*.*", "C:\Backup\", 1, 1
+#"C:\Data\Old Documents\*.*", "C:\Backup\", 1, 1
