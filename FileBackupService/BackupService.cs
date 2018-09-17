@@ -10,12 +10,14 @@ using System.Xml;
 using System.IO;
 using System.Threading.Tasks;
 using FileBackupService;
+using FileBackupService.Properties;
 
 namespace FileBackupService
 {
     public partial class BackupService : ServiceBase
     {
-        List<FileSystemWatcherExt> dirList = new List<FileSystemWatcherExt>();
+        List<FileSystemWatcherExt> dirWatcherList = new List<FileSystemWatcherExt>();
+        StreamWriter appLog = new StreamWriter(Settings.Default.LogDirectory + "BackupServiceLog.txt");
 
         public BackupService()
         {
@@ -27,10 +29,28 @@ namespace FileBackupService
             LoadDirectories();   
         }
 
+        private void WriteToLog(string[] message)
+        {
+            try
+            {
+                // Write all lines to the log file.
+                foreach(string line in message)
+                {
+                    appLog.WriteLine(line);
+                }
+
+                appLog.Flush();
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
         private void LoadDirectories()
         {
             // Load all the directories from the CSV file.
-
             StreamReader dirs = new StreamReader("Directories.csv");
             FileSystemWatcherExt fswNew;
             string currentLine, dirSource = "", dirDest = "";
@@ -77,17 +97,18 @@ namespace FileBackupService
                             fswNew.Changed += fswModel_Changed;
                             fswNew.Created += fswModel_Created;
                             fswNew.Deleted += fswModel_Deleted;
-                            fswModel.Renamed += fswModel_Renamed;
-                            dirList.Add(fswNew);
+                            fswNew.Renamed += fswModel_Renamed;
+                            dirWatcherList.Add(fswNew);
                         }                   
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw ex;
+                WriteToLog(new string[] { DateTime.Now.ToString(), ex.Message });
             }
         }
+
 
         private FileSystemWatcherExt CreateFileWatcher(string FileSource, bool IncludeSubdirs, string Destination)
         {
@@ -118,8 +139,8 @@ namespace FileBackupService
             }
             catch (Exception ex)
             {
-
-                throw ex;
+                WriteToLog(new string[] { DateTime.Now.ToString(),
+                    "Error creating FileWatcher on " + FileSource + ".",  ex.Message});
             }
 
             if(fswReturn.Path.Length > 0)
@@ -130,14 +151,18 @@ namespace FileBackupService
             {
                 return null;
             }
-
         }
-
-
 
         protected override void OnStop()
         {
-
+            try
+            {
+                appLog.Close();
+            }
+            catch (Exception ex) 
+            {
+                throw ex;
+            }
         }
 
         internal void TestStartandStop(string[] args)
@@ -158,7 +183,7 @@ namespace FileBackupService
         {
             FileInfo newFileInfo = new FileInfo(Location);
             string fileExtension = newFileInfo.Extension;
-            FileObject returnFile;
+            FileObject returnFile = null;
 
             try
             {
@@ -178,7 +203,8 @@ namespace FileBackupService
             }
             catch (Exception ex)
             {
-                throw ex;
+                WriteToLog(new string[] { DateTime.Now.ToString(),
+                    "Error classifying file: " + Location + ".",  ex.Message});
             }
 
             return returnFile;
@@ -186,7 +212,7 @@ namespace FileBackupService
 
         private void CopyChangedFile(FileSystemWatcherExt FileWatcher, string SourceFilePath)
         {
-            string fullDestPath;
+            string fullDestPath = "";
 
             try
             {
@@ -201,11 +227,12 @@ namespace FileBackupService
                 }
 
                 // Copy the file.
-                File.Copy(SourceFilePath, fullDestPath);
+                File.Copy(SourceFilePath, fullDestPath, true);
             }
             catch (Exception ex)
             {
-                throw ex;
+                WriteToLog(new string[] { DateTime.Now.ToString(),
+                    "Error copying file from " + SourceFilePath + " to " + fullDestPath + ".",  ex.Message});
             }
         }
 
@@ -220,7 +247,7 @@ namespace FileBackupService
                     .Replace("\\\\", "\\");
 
                 // If the file exists, delete it.
-                if (!File.Exists(fullDestPath))
+                if (File.Exists(fullDestPath))
                 {
                     // Copy the file.
                     File.Delete(fullDestPath);
@@ -229,7 +256,8 @@ namespace FileBackupService
             }
             catch (Exception ex)
             {
-                throw ex;
+                WriteToLog(new string[] { DateTime.Now.ToString(),
+                    "Error deleting file from " + SourceFilePath + ".",  ex.Message});
             }
         }
 
@@ -238,9 +266,6 @@ namespace FileBackupService
             // Get the current file system watcher.
             FileSystemWatcherExt fswExt = (FileSystemWatcherExt)sender;
 
-            // Create the specific file object for the file type.
-            FileObject changedFile = GetAffectedFile(e.FullPath);
-
             // Copy the file
             CopyChangedFile(fswExt, e.FullPath);
 
@@ -248,6 +273,8 @@ namespace FileBackupService
 
         private void fswModel_Created(object sender, FileSystemEventArgs e)
         {
+            // Get the current file system watcher and file type object
+            // File type object is just used as a demo for now.
             FileSystemWatcherExt fswExt = (FileSystemWatcherExt)sender;
             FileObject changedFile = GetAffectedFile(e.FullPath);
 
@@ -257,18 +284,18 @@ namespace FileBackupService
 
         private void fswModel_Deleted(object sender, FileSystemEventArgs e)
         {
+
             FileSystemWatcherExt fswExt = (FileSystemWatcherExt)sender;
-            FileObject changedFile = GetAffectedFile(e.FullPath);
+
         }
 
         private void fswModel_Renamed(object sender, RenamedEventArgs e)
         {
             FileSystemWatcherExt fswExt = (FileSystemWatcherExt)sender;
-            FileObject changedFile = GetAffectedFile(e.FullPath);
             
             // Delete the backup file and copy the new one.
-            DeleteFile(fswExt, e.FullPath);
-            CopyChangedFile(fswExt, e.OldFullPath);
+            DeleteFile(fswExt, e.OldFullPath);
+            CopyChangedFile(fswExt, e.FullPath);
         }
     }
 
