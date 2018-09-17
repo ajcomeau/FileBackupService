@@ -9,6 +9,7 @@ using System.Text;
 using System.Xml;
 using System.IO;
 using System.Threading.Tasks;
+using FileBackupService;
 
 namespace FileBackupService
 {
@@ -153,43 +154,138 @@ namespace FileBackupService
             this.OnStop();
         }
 
+        private FileObject GetAffectedFile(string Location)
+        {
+            FileInfo newFileInfo = new FileInfo(Location);
+            string fileExtension = newFileInfo.Extension;
+            FileObject returnFile;
+
+            try
+            {
+                // Return the correct type by extension
+                switch (fileExtension.ToUpper())
+                {
+                    case "ZIP":
+                        returnFile = new ZIPArchive(Location);
+                        break;
+                    case "MP3":
+                        returnFile = new MP3Audio(Location);
+                        break;
+                    default:
+                        returnFile = new FileObject(Location);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return returnFile;
+        }
+
+        private void CopyChangedFile(FileSystemWatcherExt FileWatcher, string SourceFilePath)
+        {
+            string fullDestPath;
+
+            try
+            {
+                // Get the destination path.
+                fullDestPath = SourceFilePath.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory)
+                    .Replace("\\\\", "\\");
+
+                // If it doesn't exist already, create it.
+                if (!Directory.Exists(Directory.GetParent(fullDestPath).ToString()))
+                {
+                    Directory.CreateDirectory(fullDestPath);
+                }
+
+                // Copy the file.
+                File.Copy(SourceFilePath, fullDestPath);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        private void DeleteFile(FileSystemWatcherExt FileWatcher, string SourceFilePath)
+        {
+            string fullDestPath;
+
+            try
+            {
+                // Get the destination path.
+                fullDestPath = SourceFilePath.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory)
+                    .Replace("\\\\", "\\");
+
+                // If the file exists, delete it.
+                if (!File.Exists(fullDestPath))
+                {
+                    // Copy the file.
+                    File.Delete(fullDestPath);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
         private void fswModel_Changed(object sender, FileSystemEventArgs e)
         {
-            FileSystemWatcherExt fswExt =  (FileSystemWatcherExt)sender;
-            Console.WriteLine(fswExt.DestinationDirectory);
+            // Get the current file system watcher.
+            FileSystemWatcherExt fswExt = (FileSystemWatcherExt)sender;
+
+            // Create the specific file object for the file type.
+            FileObject changedFile = GetAffectedFile(e.FullPath);
+
+            // Copy the file
+            CopyChangedFile(fswExt, e.FullPath);
+
         }
 
         private void fswModel_Created(object sender, FileSystemEventArgs e)
         {
             FileSystemWatcherExt fswExt = (FileSystemWatcherExt)sender;
-            Console.WriteLine(fswExt.DestinationDirectory);
+            FileObject changedFile = GetAffectedFile(e.FullPath);
+
+            // Copy the file
+            CopyChangedFile(fswExt, e.FullPath);
         }
 
         private void fswModel_Deleted(object sender, FileSystemEventArgs e)
         {
             FileSystemWatcherExt fswExt = (FileSystemWatcherExt)sender;
-            Console.WriteLine(fswExt.DestinationDirectory);
+            FileObject changedFile = GetAffectedFile(e.FullPath);
         }
 
         private void fswModel_Renamed(object sender, RenamedEventArgs e)
         {
             FileSystemWatcherExt fswExt = (FileSystemWatcherExt)sender;
-            Console.WriteLine(fswExt.DestinationDirectory);
+            FileObject changedFile = GetAffectedFile(e.FullPath);
+            
+            // Delete the backup file and copy the new one.
+            DeleteFile(fswExt, e.FullPath);
+            CopyChangedFile(fswExt, e.OldFullPath);
         }
     }
 
     public class FileSystemWatcherExt : System.IO.FileSystemWatcher
     {
-        private string _destDirectory;
+        private string _destDirectory;  
 
         public string DestinationDirectory
         {
+            // Destination directory for changed files
             get { return _destDirectory; }
             set { _destDirectory = value; }
         }
 
         public FileSystemWatcherExt(string DestinationDirectory)
         {
+            // Constructor
             _destDirectory = DestinationDirectory;
         }
     }

@@ -8,3 +8,7 @@ C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\obj\Debug\FileBackup
 C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\obj\Debug\FileBackupService.pdb
 C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\bin\Debug\Directories.csv
 C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\obj\Debug\FileBackupService.BackupService.resources
+C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\bin\Debug\Ionic.Zip.dll
+C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\bin\Debug\policy.2.0.taglib-sharp.dll
+C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\bin\Debug\taglib-sharp.dll
+C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\bin\Debug\policy.2.0.taglib-sharp.config
