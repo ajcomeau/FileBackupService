@@ -26,3 +26,4 @@ C:\Users\acome\Desktop\FileBackupService\FileBackupService\obj\Debug\FileBackupS
 C:\Users\acome\Desktop\FileBackupService\FileBackupService\obj\Debug\FileBackupService.csproj.CoreCompileInputs.cache
 C:\Users\acome\Desktop\FileBackupService\FileBackupService\obj\Debug\FileBackupService.exe
 C:\Users\acome\Desktop\FileBackupService\FileBackupService\obj\Debug\FileBackupService.pdb
+C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\obj\Debug\FileBackupService.csprojResolveAssemblyReference.cache

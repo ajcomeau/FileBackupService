@@ -240,6 +240,36 @@ namespace FileBackupService
             }
         }
 
+        private void RenameBackupFile(FileSystemWatcherExt FileWatcher, string OldFile, string NewFile)
+        {
+            string origPath = "", newPath = "";
+
+            try
+            {
+                // Get the full path of the original backup file.
+                origPath = OldFile.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory)
+                    .Replace("\\\\", "\\");
+
+                newPath = NewFile.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory)
+                    .Replace("\\\\", "\\");
+
+                // If it's a directory, rename it.
+                if (Directory.Exists(origPath))
+                {
+                    Directory.Move(origPath, newPath);
+                }
+                else
+                {
+                    File.Move(origPath, newPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteToLog(new string[] { DateTime.Now.ToString(),
+                    "Error copying file from " + origPath + " to " + newPath + ".",  ex.Message});
+            }
+        }
+
         private void DeleteFile(FileSystemWatcherExt FileWatcher, string SourceFilePath)
         {
             string fullDestPath;
@@ -273,7 +303,7 @@ namespace FileBackupService
         {
             // Get the current file system watcher.
             FileSystemWatcherExt fswExt = (FileSystemWatcherExt)sender;
-
+            
             // Copy the file
             CopyChangedFile(fswExt, e.FullPath);
         }
@@ -299,8 +329,8 @@ namespace FileBackupService
             FileSystemWatcherExt fswExt = (FileSystemWatcherExt)sender;
             
             // Delete the backup file and copy the new one.
-            DeleteFile(fswExt, e.OldFullPath);
-            CopyChangedFile(fswExt, e.FullPath);
+
+            RenameBackupFile(fswExt, e.OldFullPath, e.FullPath);
         }
     }
 
