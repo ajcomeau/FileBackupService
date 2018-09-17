@@ -17,7 +17,7 @@ namespace FileBackupService
     public partial class BackupService : ServiceBase
     {
         List<FileSystemWatcherExt> dirWatcherList = new List<FileSystemWatcherExt>();
-        StreamWriter appLog = new StreamWriter(Settings.Default.LogDirectory + "BackupServiceLog.txt");
+        StreamWriter appLog = new StreamWriter(Settings.Default.LogDirectory + "BackupServiceLog.html", true);
 
         public BackupService()
         {
@@ -26,7 +26,8 @@ namespace FileBackupService
 
         protected override void OnStart(string[] args)
         {           
-            LoadDirectories();   
+            LoadDirectories();
+            
         }
 
         private void WriteToLog(string[] message)
@@ -219,15 +220,24 @@ namespace FileBackupService
                 // Get the destination path.
                 fullDestPath = SourceFilePath.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory)
                     .Replace("\\\\", "\\");
-
+                
                 // If it doesn't exist already, create it.
                 if (!Directory.Exists(Directory.GetParent(fullDestPath).ToString()))
                 {
                     Directory.CreateDirectory(fullDestPath);
                 }
 
-                // Copy the file.
-                File.Copy(SourceFilePath, fullDestPath, true);
+                // If it's a directory, create the corresponding directory.
+                // Otherwise, just copy the file.
+                if (Directory.Exists(SourceFilePath))
+                {
+                    Directory.CreateDirectory(fullDestPath);
+                }
+                else
+                {
+                    File.Copy(SourceFilePath, fullDestPath, true);
+                }
+
             }
             catch (Exception ex)
             {
@@ -246,11 +256,15 @@ namespace FileBackupService
                 fullDestPath = SourceFilePath.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory)
                     .Replace("\\\\", "\\");
 
-                // If the file exists, delete it.
+                // If the file or directory exists, delete it.
                 if (File.Exists(fullDestPath))
                 {
                     // Copy the file.
                     File.Delete(fullDestPath);
+                }
+                else if (Directory.Exists(fullDestPath))
+                {
+                    Directory.Delete(fullDestPath, true);
                 }
 
             }
@@ -268,7 +282,6 @@ namespace FileBackupService
 
             // Copy the file
             CopyChangedFile(fswExt, e.FullPath);
-
         }
 
         private void fswModel_Created(object sender, FileSystemEventArgs e)
@@ -284,9 +297,7 @@ namespace FileBackupService
 
         private void fswModel_Deleted(object sender, FileSystemEventArgs e)
         {
-
             FileSystemWatcherExt fswExt = (FileSystemWatcherExt)sender;
-
         }
 
         private void fswModel_Renamed(object sender, RenamedEventArgs e)

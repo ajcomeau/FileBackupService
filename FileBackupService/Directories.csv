@@ -10,5 +10,5 @@
 // #"C:\Data\*.*", "Z:\Data\", 1
 // #"C:\Users\Tom\Documents\*.docx", "Z:\Data\Documents\", 1
 
-#"C:\Data\WatchedDirectoryOne\*.*", "C:\Data\Backup\", 1, 1
-#"C:\Data\WatchedDirectoryTwo\*.*", "C:\Data\Backup\", 1, 1
+#"C:\Data\MonitoredOne\*.*", "C:\Data\Backup\", 1, 1
+#"C:\Data\MonitoredTwo\*.*", "C:\Data\Backup\", 1, 1
