@@ -16,8 +16,8 @@ namespace FileBackupService
 {
     public partial class BackupService : ServiceBase
     {
+        // List to hold all the FileSystemWatcher objects.
         List<FileSystemWatcherExt> dirWatcherList = new List<FileSystemWatcherExt>();
-        StreamWriter appLog = new StreamWriter(Settings.Default.LogDirectory + "BackupServiceLog.html", true);
 
         public BackupService()
         {
@@ -32,20 +32,14 @@ namespace FileBackupService
 
         private void WriteToLog(string[] message)
         {
+            // Update log
             try
-            {
-                // Write all lines to the log file.
-                foreach(string line in message)
-                {
-                    appLog.WriteLine(line);
-                }
-
-                appLog.Flush();
-
+            { 
+                File.WriteAllLines(Settings.Default.AppLogFile, message);
             }
             catch (Exception ex)
             {
-                throw ex;
+                //throw ex;
             }
         }
 
@@ -113,21 +107,25 @@ namespace FileBackupService
 
         private FileSystemWatcherExt CreateFileWatcher(string FileSource, bool IncludeSubdirs, string Destination)
         {
+            // Create and return a new file system watcher.
             FileSystemWatcherExt fswReturn = new FileSystemWatcherExt(Destination);
             string filePath = "";
             int charPlace;
 
             try
             {
+                // If the string that was passed is an actual directory, use it.
                 if (Directory.Exists(FileSource))
                 {
                     filePath = FileSource;
                 }
                 else
                 {
+                    // Otherwise, parse the string for the directory and the pattern.
                     charPlace = FileSource.LastIndexOf(@"\");
                     filePath = FileSource.Substring(0, charPlace);
 
+                    // Test again ...
                     if (Directory.Exists(filePath))
                     {
                         fswReturn.Path = filePath;
@@ -135,6 +133,7 @@ namespace FileBackupService
                     }
                 }
 
+                // Instruct the file watcher to include subdirectories.
                 fswReturn.IncludeSubdirectories = IncludeSubdirs;
 
             }
@@ -144,26 +143,21 @@ namespace FileBackupService
                     "Error creating FileWatcher on " + FileSource + ".",  ex.Message});
             }
 
+            // If the path was valid, return a file watcher ...
             if(fswReturn.Path.Length > 0)
             {
                 return fswReturn;
             }
             else
             {
+                // Otherwise, return null.
                 return null;
             }
         }
 
         protected override void OnStop()
         {
-            try
-            {
-                appLog.Close();
-            }
-            catch (Exception ex) 
-            {
-                throw ex;
-            }
+
         }
 
         internal void TestStartandStop(string[] args)

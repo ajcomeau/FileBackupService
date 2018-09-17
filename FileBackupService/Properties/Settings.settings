@@ -2,8 +2,8 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="FileBackupService.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="LogDirectory" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">c:\data\</Value>
+    <Setting Name="AppLogFile" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">c:\data\BackupServiceLog.txt</Value>
     </Setting>
   </Settings>
 </SettingsFile>

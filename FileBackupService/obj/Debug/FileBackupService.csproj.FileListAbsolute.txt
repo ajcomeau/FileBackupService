@@ -1,7 +1,6 @@
 C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\bin\Debug\FileBackupService.exe.config
 C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\bin\Debug\FileBackupService.exe
 C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\bin\Debug\FileBackupService.pdb
-C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\obj\Debug\FileBackupService.csprojResolveAssemblyReference.cache
 C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\obj\Debug\FileBackupService.ProjectInstaller.resources
 C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\obj\Debug\FileBackupService.csproj.GenerateResource.Cache
 C:\Users\Andrew\Desktop\FileBackupService\FileBackupService\obj\Debug\FileBackupService.exe
