@@ -26,8 +26,7 @@ namespace FileBackupService
 
         protected override void OnStart(string[] args)
         {           
-            LoadDirectories();
-            
+            LoadDirectories();            
         }
 
         private void WriteToLog(string[] message)
@@ -208,17 +207,17 @@ namespace FileBackupService
         private void CopyChangedFile(FileSystemWatcherExt FileWatcher, string SourceFilePath)
         {
             string fullDestPath = "";
-
+            string fileWatcherName = FileWatcher.Path.Replace(@"\","_").Replace(":", "_");
             try
             {
                 // Get the destination path.
-                fullDestPath = SourceFilePath.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory)
-                    .Replace("\\\\", "\\");
+                fullDestPath = SourceFilePath.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory + 
+                    "\\" + fileWatcherName).Replace("\\\\", "\\");
                 
                 // If it doesn't exist already, create it.
                 if (!Directory.Exists(Directory.GetParent(fullDestPath).ToString()))
                 {
-                    Directory.CreateDirectory(fullDestPath);
+                    Directory.CreateDirectory(Directory.GetParent(fullDestPath).ToString());
                 }
 
                 // If it's a directory, create the corresponding directory.
@@ -243,15 +242,16 @@ namespace FileBackupService
         private void RenameBackupFile(FileSystemWatcherExt FileWatcher, string OldFile, string NewFile)
         {
             string origPath = "", newPath = "";
+            string fileWatcherName = FileWatcher.Path.Replace(@"\", "_").Replace(":", "_");
 
             try
             {
                 // Get the full path of the original backup file.
-                origPath = OldFile.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory)
-                    .Replace("\\\\", "\\");
+                origPath = OldFile.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory +
+                    "\\" + fileWatcherName).Replace("\\\\", "\\");
 
-                newPath = NewFile.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory)
-                    .Replace("\\\\", "\\");
+                newPath = NewFile.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory +
+                    "\\" + fileWatcherName).Replace("\\\\", "\\");
 
                 // If it's a directory, rename it.
                 if (Directory.Exists(origPath))
@@ -260,8 +260,10 @@ namespace FileBackupService
                 }
                 else
                 {
+                    // If it's a file, rename it.
                     File.Move(origPath, newPath);
                 }
+
             }
             catch (Exception ex)
             {
@@ -273,21 +275,23 @@ namespace FileBackupService
         private void DeleteFile(FileSystemWatcherExt FileWatcher, string SourceFilePath)
         {
             string fullDestPath;
+            string fileWatcherName = FileWatcher.Path.Replace(@"\", "_").Replace(":", "_");
 
             try
             {
                 // Get the destination path.
-                fullDestPath = SourceFilePath.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory)
-                    .Replace("\\\\", "\\");
+                fullDestPath = SourceFilePath.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory +
+                    "\\" + fileWatcherName).Replace("\\\\", "\\");
 
                 // If the file or directory exists, delete it.
                 if (File.Exists(fullDestPath))
                 {
-                    // Copy the file.
+                    // Delete the file.
                     File.Delete(fullDestPath);
                 }
                 else if (Directory.Exists(fullDestPath))
                 {
+                    // Delete the directory.
                     Directory.Delete(fullDestPath, true);
                 }
 
