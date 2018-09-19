@@ -36,6 +36,8 @@
             // backupTimer
             // 
             this.backupTimer.Enabled = true;
+            this.backupTimer.Interval = 5000D;
+            this.backupTimer.Elapsed += new System.Timers.ElapsedEventHandler(this.backupTimer_Elapsed);
             // 
             // fswModel
             // 

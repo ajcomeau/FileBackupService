@@ -16,8 +16,15 @@ namespace FileBackupService
 {
     public partial class BackupService : ServiceBase
     {
+        public struct FileCopySpec
+        {
+            public string fromLoc;
+            public string toLoc;
+        }
+
         // List to hold all the FileSystemWatcher objects.
         List<FileSystemWatcherExt> dirWatcherList = new List<FileSystemWatcherExt>();
+        Queue<FileCopySpec> CopyRequests = new Queue<FileCopySpec>();
 
         public BackupService()
         {
@@ -31,10 +38,18 @@ namespace FileBackupService
 
         private void WriteToLog(string[] message)
         {
+            StreamWriter swLog = new StreamWriter(Settings.Default.AppLogFile, true);
             // Update log
             try
             { 
-                File.WriteAllLines(Settings.Default.AppLogFile, message);
+                foreach(string line in message)
+                {
+                    swLog.WriteLine(line);
+                }
+
+                swLog.WriteLine("");
+                swLog.Flush();
+                swLog.Close();
             }
             catch (Exception ex)
             {
@@ -208,27 +223,47 @@ namespace FileBackupService
         {
             string fullDestPath = "";
             string fileWatcherName = FileWatcher.Path.Replace(@"\","_").Replace(":", "_");
+            FileCopySpec fcsCopy = new FileCopySpec(); 
+
+            bool allowCopy = true;
+
             try
             {
                 // Get the destination path.
                 fullDestPath = SourceFilePath.Replace(FileWatcher.Path, FileWatcher.DestinationDirectory + 
                     "\\" + fileWatcherName).Replace("\\\\", "\\");
-                
-                // If it doesn't exist already, create it.
-                if (!Directory.Exists(Directory.GetParent(fullDestPath).ToString()))
-                {
-                    Directory.CreateDirectory(Directory.GetParent(fullDestPath).ToString());
-                }
 
-                // If it's a directory, create the corresponding directory.
-                // Otherwise, just copy the file.
-                if (Directory.Exists(SourceFilePath))
+                // If the destination file has been accessed in the last five seconds,
+                // Cancel the copy.
+                if (FileWatcher.LastFileAccessed == fullDestPath)
+                    allowCopy = (FileWatcher.LastOperationTime < DateTime.Now.AddSeconds(-5));
+
+                // Otherwise, go ahead and copy it.
+                if (allowCopy)
                 {
-                    Directory.CreateDirectory(fullDestPath);
-                }
-                else
-                {
-                    File.Copy(SourceFilePath, fullDestPath, true);
+                    // If it doesn't exist already, create it.
+                    if (!Directory.Exists(Directory.GetParent(fullDestPath).ToString()))
+                    {
+                        Directory.CreateDirectory(Directory.GetParent(fullDestPath).ToString());
+                    }
+
+                    // If it's a directory, create the corresponding directory.
+                    // Otherwise, just copy the file.
+                    if (Directory.Exists(SourceFilePath))
+                    {
+                        Directory.CreateDirectory(fullDestPath);
+                    }
+                    else
+                    {
+                        // Add it to the copy queue
+                        fcsCopy.fromLoc = SourceFilePath;
+                        fcsCopy.toLoc = fullDestPath;
+                        CopyRequests.Enqueue(fcsCopy);
+                    }
+
+                    // Update the filewatcher.
+                    FileWatcher.LastFileAccessed = fullDestPath;
+                    FileWatcher.LastOperationTime = DateTime.Now;
                 }
 
             }
@@ -336,11 +371,60 @@ namespace FileBackupService
 
             RenameBackupFile(fswExt, e.OldFullPath, e.FullPath);
         }
+
+        private void backupTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            FileCopySpec fcsCopy;
+
+            try
+            {              
+                // If there are files to be copied.
+                while(CopyRequests.Count > 0)
+                {
+                    fcsCopy = CopyRequests.Peek();
+                    File.Copy(fcsCopy.fromLoc, fcsCopy.toLoc, true);
+                    File.SetAttributes(fcsCopy.toLoc, FileAttributes.Normal);
+                    // Remove from queue if successful.
+                    fcsCopy = CopyRequests.Dequeue();
+                    backupTimer.Interval = 30000;
+                }                
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            finally
+            {
+                // Re-enable the backup timer.
+                backupTimer.Interval = 5000;
+            }
+        }
     }
 
     public class FileSystemWatcherExt : System.IO.FileSystemWatcher
     {
-        private string _destDirectory;  
+        private string _destDirectory;
+        private string _lastFile;
+        private DateTime _lastOpTime;
+
+        public FileSystemWatcherExt(string DestinationDirectory)
+        {
+            // Constructor
+            _destDirectory = DestinationDirectory;
+        }
+
+        public DateTime LastOperationTime
+        {
+            get { return _lastOpTime; }
+            set { _lastOpTime = value; }
+        }
+
+        public string LastFileAccessed
+        {
+            get { return _lastFile; }
+            set { _lastFile = value; }
+        }
+
 
         public string DestinationDirectory
         {
@@ -349,10 +433,5 @@ namespace FileBackupService
             set { _destDirectory = value; }
         }
 
-        public FileSystemWatcherExt(string DestinationDirectory)
-        {
-            // Constructor
-            _destDirectory = DestinationDirectory;
-        }
     }
 }
