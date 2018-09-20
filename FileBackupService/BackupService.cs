@@ -22,6 +22,8 @@ namespace FileBackupService
             public string toLoc;
         }
 
+
+
         // List to hold all the FileSystemWatcher objects.
         List<FileSystemWatcherExt> dirWatcherList = new List<FileSystemWatcherExt>();
         Queue<FileCopySpec> CopyRequests = new Queue<FileCopySpec>();
@@ -89,6 +91,12 @@ namespace FileBackupService
                                 validLine = true;
                                 dirSource = lineParse[0].Trim().Trim('"');
                                 dirDest = lineParse[1].Trim().Trim('"');
+                                if (!dirDest.EndsWith(@"\"))
+                                {
+                                    dirDest += @"\";
+                                }
+
+
                                 dirIncludeSubs = (lineParse[2].Trim() != "0");
                             }
                         }
@@ -128,6 +136,12 @@ namespace FileBackupService
 
             try
             {
+                // If the user has included a \ at the end of the source directory.
+                if (FileSource.EndsWith(@"\"))
+                {
+                    FileSource = FileSource.Substring(0, (FileSource.Length - 1));
+                }
+
                 // If the string that was passed is an actual directory, use it.
                 if (Directory.Exists(FileSource))
                 {
@@ -386,8 +400,8 @@ namespace FileBackupService
                     File.SetAttributes(fcsCopy.toLoc, FileAttributes.Normal);
                     // Remove from queue if successful.
                     fcsCopy = CopyRequests.Dequeue();
-                    backupTimer.Interval = 30000;
-                }                
+                    backupTimer.Interval = 300000;
+                }
             }
             catch (Exception ex)
             {

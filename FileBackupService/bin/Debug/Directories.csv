@@ -1,14 +1,23 @@
-﻿// Enter the directories to be backed up, their destination directories
-// and a 1 (active) or a 0 (inactive). 
-// Include file patterns - *.* is the default.
-// Begin the line with a # and separate the values with a comma.
+﻿// This file specifies the source and target directories for the FileBackup Service
+// The source directories will be monitored for changes and files will be automatically
+// backed up to the selected target directories.
+// The lines at the bottom of this file which begin with # will be read by the program.
+// Enter the following on each line:
+// - # (hashtag)
+// - Source directory and file pattern to monitor
+// - Target backup directory.   
+// - A 1 or 0 indicating if subdirectories should be included.
+// - A 1 or 0 indicating if the entry is active. 0 means it will be ignored.
+// Begin each line with a # and separate the values with a comma.
 // Enter one source / destination pair per line. 
 // Lines with the wrong format or invalid paths will be disregarded.
 // Changes will not take effect until the system or the service is restarted.
+// Root directories (i.e. C:\) are NOT RECOMMENDED as source directories.
 //
 // Examples:
-// #"C:\Data\*.*", "Z:\Data\", 1
-// #"C:\Users\Tom\Documents\*.docx", "Z:\Data\Documents\", 1
-
-#"C:\Data\MonitoredOne\*.*", "C:\Data\Backup\", 1, 1
-#"C:\Data\MonitoredTwo\*.*", "C:\Data\Backup\", 1, 1
+// #"C:\Data\*.*", "Z:\Data\", 1, 1
+// #"C:\Users\Tom\Documents\*.docx", "Z:\Data\Documents\", 0, 1
+// Hashtag, Source FilePath, Backup Path, Subdirectories, Active
+//
+#"C:\Data\MonitoredOne\*.*", "E:", 1, 1
+#"C:\Data\MonitoredTwo\*.*", "C:\Data\Backup\", 0, 0
